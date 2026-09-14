@@ -1,4 +1,9 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = (() => {
+  const configuredBase = import.meta.env.VITE_API_BASE_URL;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  const base = (configuredBase || origin).replace(/\/$/, '');
+  return `${base}/api`;
+})();
 
 // Helper for local storage persistence fallback
 const getLocalData = (key: string, defaultValue: any) => {
