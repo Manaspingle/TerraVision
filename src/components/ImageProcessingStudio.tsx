@@ -14,12 +14,15 @@ import {
   ChevronRight,
   Info,
   Database,
+  Brain,
   X,
   CheckCircle2
 } from 'lucide-react';
 import { PipelineOp, UserProfile } from '../types';
 import { processImageApi } from '../api';
 import { DIPMatlabVisualizer } from './DIPMatlabVisualizer';
+import { DatasetHubModal } from './DatasetHubModal';
+
 
 interface StudioProps {
   user: UserProfile | null;
@@ -30,38 +33,37 @@ interface StudioProps {
 const STAGES = [
   { id: 'acquisition', label: '1. Image Acquisition' },
   { id: 'preprocessing', label: '2. Preprocessing' },
-  { id: 'noise_removal', label: '3. Noise Removal' },
-  { id: 'image_enhancement', label: '4. Enhancement' },
-  { id: 'segmentation', label: '5. Segmentation' },
-  { id: 'feature_extraction', label: '6. Feature Extraction' },
+  { id: 'image_enhancement', label: '3. Image Enhancement' },
+  { id: 'noise_removal', label: '4. Image Restoration / Noise Removal' },
+  { id: 'segmentation', label: '5. Image Segmentation' },
+  { id: 'morphological_processing', label: '6. Morphological Processing' },
+  { id: 'feature_extraction', label: '7. Feature Extraction' },
+  { id: 'classification', label: '8. Classification / Object Recognition' },
+  { id: 'interpretation', label: '9. Image Interpretation / Decision Making' },
 ];
 
 const OPERATIONS_MAP: Record<string, { id: string; label: string; pro?: boolean }[]> = {
   acquisition: [
-    { id: 'capture', label: 'Image Capture & Storage' },
-    { id: 'sampling', label: 'Down/Upsampling' },
-    { id: 'quantization', label: 'Quantization (Bit Depth)' },
-    { id: 'digitization', label: 'Digitization Sampling Grid' }
+    { id: 'capture', label: 'Image Capture' },
+    { id: 'sampling', label: 'Sampling' },
+    { id: 'quantization', label: 'Quantization' },
+
+    { id: 'digitization', label: 'Digitization Grid' },
+    { id: 'grayscale_to_rgb', label: 'Grayscale → RGB Conversion' },
+    { id: 'image_storage', label: 'Image Storage' }
   ],
   preprocessing: [
-    { id: 'grayscale', label: 'Grayscale Conversion' },
     { id: 'resizing', label: 'Image Resizing' },
     { id: 'cropping', label: 'Cropping' },
-    { id: 'roi_selection', label: 'Region of Interest (ROI)' },
-    { id: 'color_conversion', label: 'RGB → HSV / Lab Space' },
+    { id: 'roi_selection', label: 'ROI Selection' },
+    { id: 'grayscale', label: 'Grayscale Conversion' },
+    { id: 'grayscale_to_rgb', label: 'Grayscale → RGB Conversion / Pseudo-Coloring' },
+    { id: 'color_conversion', label: 'Color-space Conversion (RGB → HSV/Lab)' },
     { id: 'normalization', label: 'Image Normalization' },
-    { id: 'geometric_correction', label: 'Geometric Rotation' },
+    { id: 'geometric_correction', label: 'Geometric Correction' },
     { id: 'image_registration', label: 'Image Registration (ORB)', pro: true }
   ],
-  noise_removal: [
-    { id: 'mean_filtering', label: 'Mean Filtering' },
-    { id: 'median_filtering', label: 'Median Filtering' },
-    { id: 'gaussian_filtering', label: 'Gaussian Filtering' },
-    { id: 'bilateral_filtering', label: 'Bilateral Filtering' },
-    { id: 'wiener_filtering', label: 'Wiener Restoration Filter', pro: true },
-    { id: 'min_max_filtering', label: 'Min/Max Filtering' },
-    { id: 'low_pass_filter', label: '2D FFT Low-Pass Filter' }
-  ],
+
   image_enhancement: [
     { id: 'contrast_stretching', label: 'Contrast Stretching' },
     { id: 'histogram_equalization', label: 'Histogram Equalization' },
@@ -69,25 +71,56 @@ const OPERATIONS_MAP: Record<string, { id: string; label: string; pro?: boolean 
     { id: 'brightness_adjustment', label: 'Brightness Adjustment' },
     { id: 'gamma_correction', label: 'Gamma Correction' },
     { id: 'image_sharpening', label: 'Image Sharpening' },
-    { id: 'high_pass_filter', label: '2D FFT High-Pass Filter' },
+    { id: 'high_pass_filter', label: 'High-pass Filtering' },
     { id: 'unsharp_masking', label: 'Unsharp Masking' }
+  ],
+  noise_removal: [
+    { id: 'mean_filtering', label: 'Mean Filtering' },
+    { id: 'median_filtering', label: 'Median Filtering' },
+    { id: 'gaussian_filtering', label: 'Gaussian Filtering' },
+    { id: 'bilateral_filtering', label: 'Bilateral Filtering' },
+    { id: 'wiener_filtering', label: 'Wiener Filtering', pro: true },
+    { id: 'min_max_filtering', label: 'Min/Max Filtering' },
+    { id: 'low_pass_filter', label: 'Low-pass Filtering' }
   ],
   segmentation: [
     { id: 'global_thresholding', label: 'Global Thresholding' },
     { id: 'adaptive_thresholding', label: 'Adaptive Thresholding' },
-    { id: 'otsu_thresholding', label: 'Otsu Thresholding' },
-    { id: 'edge_segmentation', label: 'Edge-Based Segmentation' },
-    { id: 'region_growing', label: 'Region Growing Segmentation' },
+    { id: 'otsu_thresholding', label: "Otsu's Thresholding" },
+    { id: 'edge_segmentation', label: 'Edge-based Segmentation' },
+    { id: 'region_growing', label: 'Region Growing' },
     { id: 'watershed_segmentation', label: 'Watershed Segmentation', pro: true },
-    { id: 'kmeans', label: 'K-Means Color Segmentation' },
+    { id: 'kmeans', label: 'K-Means Clustering' },
     { id: 'morphological_segmentation', label: 'Morphological Segmentation' }
   ],
+  morphological_processing: [
+    { id: 'erosion', label: 'Erosion' },
+    { id: 'dilation', label: 'Dilation' },
+    { id: 'opening', label: 'Opening' },
+    { id: 'closing', label: 'Closing' },
+    { id: 'boundary_extraction', label: 'Boundary Extraction' },
+    { id: 'skeletonization', label: 'Skeletonization', pro: true }
+  ],
   feature_extraction: [
-    { id: 'shape_features', label: 'Shape Features (Area/Perimeter)' },
-    { id: 'texture_features', label: 'GLCM Texture Matrix (Entropy)', pro: true },
-    { id: 'color_features', label: 'Color Histogram & Moments' },
-    { id: 'hog', label: 'HOG (Oriented Gradients)', pro: true },
-    { id: 'corners', label: 'Harris Corner Detection' }
+    { id: 'shape_features', label: 'Shape Features (Area, Perimeter, Circularity, etc.)' },
+    { id: 'texture_features', label: 'Texture Features (GLCM: Contrast, Energy, Entropy)', pro: true },
+    { id: 'color_features', label: 'Color Features (Mean, Histogram, Moments)' },
+    { id: 'edge_structural_features', label: 'Edge/Structural Features (Density, Contours, Corners)' }
+  ],
+  classification: [
+    { id: 'template_matching', label: 'Template Matching' },
+    { id: 'knn_classification', label: 'K-NN Classification' },
+    { id: 'svm_classification', label: 'SVM Classification', pro: true },
+    { id: 'decision_tree', label: 'Decision Tree' },
+    { id: 'cnn_classification', label: 'CNN Deep Learning', pro: true }
+  ],
+  interpretation: [
+    { id: 'object_identification', label: 'Object Identification' },
+    { id: 'defect_detection', label: 'Defect Detection' },
+    { id: 'medical_diagnosis', label: 'Medical Diagnosis' },
+    { id: 'face_recognition', label: 'Face Recognition' },
+    { id: 'satellite_analysis', label: 'Satellite-Image Analysis', pro: true },
+    { id: 'report_generation', label: 'Decision / Report Generation' }
   ]
 };
 
@@ -153,18 +186,27 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
   onOpenSubscription,
   onOpenReportModal
 }) => {
-  const [selectedStage, setSelectedStage] = useState('preprocessing');
-  const [selectedOp, setSelectedOp] = useState('grayscale');
+  const isMasterAdmin = user?.role === 'master_admin' || user?.email === 'manaspingle.dev@gmail.com';
+  const hasProAccess = Boolean(user?.isPro || isMasterAdmin);
+
+  const [selectedStage, setSelectedStage] = useState('acquisition');
+  const [selectedOp, setSelectedOp] = useState('capture');
   const [currentImageSrc, setCurrentImageSrc] = useState<string>(SATELLITE_LIBRARY[0].url);
   const [currentImageBlob, setCurrentImageBlob] = useState<Blob | null>(null);
   const [activePresetInfo, setActivePresetInfo] = useState<string>(SATELLITE_LIBRARY[0].title);
   
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
+  const [datasetHubOpen, setDatasetHubOpen] = useState(false);
   const [pipelineQueue, setPipelineQueue] = useState<PipelineOp[]>([]);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [factor, setFactor] = useState(0.5);
+  const [samplingFactor, setSamplingFactor] = useState(4);
+  const [quantizationLevels, setQuantizationLevels] = useState(8);
+  const [gridSize, setGridSize] = useState(16);
+  const [rgbMode, setRgbMode] = useState('rgb_3channel');
   const [ksize, setKsize] = useState(5);
   const [gamma, setGamma] = useState(1.5);
   const [threshold, setThreshold] = useState(127);
@@ -202,9 +244,9 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
 
   const handleRunOperation = async () => {
     setErrorMsg(null);
-    const opConfig = OPERATIONS_MAP[selectedStage].find((o) => o.id === selectedOp);
+    const opConfig = OPERATIONS_MAP[selectedStage]?.find((o) => o.id === selectedOp);
     
-    if (opConfig?.pro && !user?.isPro) {
+    if (opConfig?.pro && !hasProAccess) {
       onOpenSubscription();
       return;
     }
@@ -214,6 +256,15 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
       const blob = await getBlobFromSrc(currentImageSrc);
       const params: Record<string, any> = {
         factor,
+        stride: samplingFactor,
+        s: samplingFactor,
+        levels: quantizationLevels,
+        L: quantizationLevels,
+        grid_size: gridSize,
+        gridSize: gridSize,
+        step: gridSize,
+        mode: rgbMode,
+        space: rgbMode,
         ksize,
         gamma,
         threshold,
@@ -221,6 +272,7 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
         scale: factor,
         angle: 45
       };
+
 
       const result = await processImageApi(blob, selectedStage, selectedOp, params);
       
@@ -260,6 +312,14 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          {/* Dataset & ML Models Hub Button */}
+          <button
+            onClick={() => setDatasetHubOpen(true)}
+            className="flex-1 sm:flex-initial text-xs flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-600/30 transition-all"
+          >
+            <Brain className="w-4 h-4 text-cyan-200" /> Dataset & ML Models Hub
+          </button>
+
           {/* Preset Satellite Library Trigger */}
           <button
             onClick={() => setLibraryModalOpen(true)}
@@ -267,6 +327,7 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
           >
             <Database className="w-4 h-4 text-cyan-400" /> Satellite Preset Library
           </button>
+
 
           <input
             type="file"
@@ -347,7 +408,104 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
 
             {/* Dynamic Parameter Sliders */}
             <div className="space-y-4 pt-2 border-t border-slate-800">
+              {selectedOp === 'sampling' && (
+                <div>
+                  <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <span>Sampling Factor / Stride s</span>
+                    <span className="font-mono text-cyan-400">s = {samplingFactor}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    {[2, 4, 8, 16].map((sf) => (
+                      <button
+                        key={sf}
+                        type="button"
+                        onClick={() => setSamplingFactor(sf)}
+                        className={`py-1.5 text-xs font-mono font-bold rounded-lg border transition ${
+                          samplingFactor === sf
+                            ? 'bg-cyan-600 border-cyan-400 text-white shadow-md'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        s={sf}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedOp === 'quantization' && (
+                <div>
+                  <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <span>Quantization Levels (L)</span>
+                    <span className="font-mono text-cyan-400">L = {quantizationLevels} levels</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    {[2, 4, 8, 16, 32, 64, 128].map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setQuantizationLevels(lvl)}
+                        className={`py-1.5 text-xs font-mono font-bold rounded-lg border transition ${
+                          quantizationLevels === lvl
+                            ? 'bg-cyan-600 border-cyan-400 text-white shadow-md'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        L={lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedOp === 'digitization' && (
+                <div>
+                  <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <span>Digitization Grid Size</span>
+                    <span className="font-mono text-cyan-400">{gridSize} x {gridSize} px</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    {[8, 16, 32, 64].map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setGridSize(g)}
+                        className={`py-1.5 text-xs font-mono font-bold rounded-lg border transition ${
+                          gridSize === g
+                            ? 'bg-cyan-600 border-cyan-400 text-white shadow-md'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {g}px
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(selectedOp === 'grayscale_to_rgb' || selectedOp === 'color_conversion') && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Grayscale → RGB Conversion Mode
+                  </label>
+                  <select
+                    value={rgbMode}
+                    onChange={(e) => setRgbMode(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  >
+                    <option value="rgb_3channel">Standard 3-Channel RGB [R, G, B]</option>
+                    <option value="pseudocolor_jet">Pseudo-Color Thermal JET Colormap</option>
+                    <option value="pseudocolor_turbo">Pseudo-Color TURBO Satellite Heatmap</option>
+                    <option value="pseudocolor_viridis">Pseudo-Color VIRIDIS Vegetation Index</option>
+                    <option value="pseudocolor_ocean">Pseudo-Color OCEAN Thermal Palette</option>
+                    <option value="false_color">False-Color Satellite Infrared Composite</option>
+                  </select>
+                </div>
+              )}
+
+
               {selectedOp.includes('filtering') && (
+
                 <div>
                   <div className="flex justify-between text-xs text-slate-300 mb-1">
                     <span>Kernel Size</span>
@@ -419,7 +577,7 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
             </div>
 
             {/* Run Button */}
-            {OPERATIONS_MAP[selectedStage].find((o) => o.id === selectedOp)?.pro && !user?.isPro ? (
+            {OPERATIONS_MAP[selectedStage]?.find((o) => o.id === selectedOp)?.pro && !hasProAccess ? (
               <button
                 onClick={onOpenSubscription}
                 className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-600/30 transition-all"
@@ -615,6 +773,9 @@ export const ImageProcessingStudio: React.FC<StudioProps> = ({
           </div>
         </div>
       )}
+
+      <DatasetHubModal isOpen={datasetHubOpen} onClose={() => setDatasetHubOpen(false)} />
     </div>
   );
 };
+

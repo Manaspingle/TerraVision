@@ -46,71 +46,132 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="w-full space-y-16 sm:space-y-24 pb-16 overflow-hidden">
       {/* 1. Hero Section */}
-      <section className="relative pt-8 sm:pt-16 lg:pt-20 px-4 sm:px-6 max-w-7xl mx-auto">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="text-center space-y-5 sm:space-y-6 max-w-4xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-900 border border-cyan-500/30 rounded-full text-[11px] sm:text-xs font-semibold text-cyan-300 shadow-inner"
-          >
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-spin" />
-            <span>Next-Gen Earth Observation & Satellite Image Processing</span>
-          </motion.div>
+      <section className="relative pt-6 sm:pt-12 lg:pt-16 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="absolute top-0 left-1/4 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight"
-          >
-            Unlock the Power of Earth Observation with{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">
-              Real Computer Vision
-            </span>
-          </motion.h1>
-
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed px-2"
-          >
-            TerraVision is an advanced remote sensing platform designed for GIS researchers, satellite analysts, and students. Process multispectral satellite imagery using real 6-stage DIP algorithms and export professional PDF analytical reports.
-          </motion.p>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4"
-          >
-            <button 
-              onClick={() => handleActionClick('studio')}
-              className="w-full sm:w-auto glow-btn flex items-center justify-center gap-2 group"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+          {/* Left Column: Heading, Paragraph, Buttons Left-Aligned */}
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-left">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-900 border border-cyan-500/30 rounded-full text-[11px] sm:text-xs font-semibold text-cyan-300 shadow-inner"
             >
-              <span>{user ? 'Open Studio Workspace' : 'Sign In / Sign Up to Access Engine'}</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+              <span>Next-Gen Earth Observation & Satellite Image Processing</span>
+            </motion.div>
 
-            {!user && (
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight"
+            >
+              Unlock the Power of Earth Observation with{' '}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">
+                Real Computer Vision
+              </span>
+            </motion.h1>
+
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm sm:text-lg text-slate-300 leading-relaxed max-w-2xl"
+            >
+              TerraVision is an advanced remote sensing platform designed for GIS researchers, satellite analysts, and students. Process multispectral satellite imagery using real 9-stage DIP algorithms and export professional PDF analytical reports.
+            </motion.p>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 sm:gap-4 pt-2"
+            >
               <button 
-                onClick={() => onOpenAuth('admin', 'login')}
-                className="w-full sm:w-auto glow-btn-outline flex items-center justify-center gap-2 text-amber-400 border-amber-500/40 hover:bg-amber-950/40"
+                onClick={() => handleActionClick('studio')}
+                className="glow-btn flex items-center justify-center gap-2 group px-6 py-3.5"
               >
-                <ShieldAlert className="w-4 h-4" />
-                <span>Admin Login / Signup</span>
+                <span>{user ? 'Open Studio Workspace' : 'Sign In / Sign Up to Access Engine'}</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-            )}
-          </motion.div>
+
+              {!user && (
+                <button 
+                  onClick={() => onOpenAuth('admin', 'login')}
+                  className="glow-btn-outline flex items-center justify-center gap-2 text-amber-400 border-amber-500/40 hover:bg-amber-950/40 px-6 py-3.5"
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>Admin Login / Signup</span>
+                </button>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Right Column: Visual Satellite Images & Data Stack */}
+          <div className="lg:col-span-5 relative space-y-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="relative glass-panel p-3 border-cyan-500/40 bg-slate-900/90 shadow-2xl rounded-2xl overflow-hidden group"
+            >
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-800">
+                <img 
+                  src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop" 
+                  alt="LANDSAT-8 OLI Satellite Imagery" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent" />
+                <div className="absolute top-3 left-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur border border-cyan-500/40 rounded-lg text-[10px] font-mono text-cyan-300">
+                  LANDSAT-8 OLI Band 5 (NIR)
+                </div>
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
+                  <span className="font-bold">Multispectral Earth Raster</span>
+                  <span className="text-[10px] text-cyan-400 font-mono">10m / Pixel Resolution</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Overlapping Satellite Secondary Preview Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              <div className="glass-panel p-2.5 border-slate-800 bg-slate-900/80 space-y-1.5">
+                <div className="aspect-video rounded-lg overflow-hidden border border-slate-800">
+                  <img 
+                    src="https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=600&auto=format&fit=crop" 
+                    alt="Sentinel-2 Land Cover" 
+                    className="w-full h-full object-cover filter contrast-125 saturate-150"
+                  />
+                </div>
+                <div className="text-[10px] font-bold text-slate-200 truncate">Sentinel-2 Land Cover</div>
+                <div className="text-[9px] text-cyan-400 font-mono">Watershed Segmented</div>
+              </div>
+
+              <div className="glass-panel p-2.5 border-slate-800 bg-slate-900/80 space-y-1.5">
+                <div className="aspect-video rounded-lg overflow-hidden border border-slate-800">
+                  <img 
+                    src="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=600&auto=format&fit=crop" 
+                    alt="MODIS Thermal Current" 
+                    className="w-full h-full object-cover filter hue-rotate-30"
+                  />
+                </div>
+                <div className="text-[10px] font-bold text-slate-200 truncate">MODIS Thermal Current</div>
+                <div className="text-[9px] text-amber-400 font-mono">11 µm Thermal IR</div>
+              </div>
+            </motion.div>
+          </div>
         </div>
 
         {/* Feature Highlights Grid */}
-        <div className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
           {[
             { icon: Activity, label: "Real OpenCV Pipeline", desc: "Native Python image processing" },
-            { icon: Layers, label: "6 Pipeline Stages", desc: "Acquisition to Feature Extraction" },
+            { icon: Layers, label: "9 Pipeline Stages", desc: "Acquisition to Interpretation" },
             { icon: FileSpreadsheet, label: "PDF Report Generator", desc: "Custom export with spectral data" },
             { icon: ShieldCheck, label: "Admin Security Gate", desc: "Developer-approved role access" }
           ].map((item, idx) => (

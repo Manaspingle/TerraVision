@@ -238,6 +238,144 @@ export const DIPMatlabVisualizer: React.FC<MatlabProps> = ({ op }) => {
           </div>
         </div>
       )}
+
+      {/* 6. MATLAB STRIDE SAMPLING VISUALIZER */}
+      {(operation.includes('sampling') || analytics.type === 'matlab_sampling') && (
+        <div className="space-y-3 bg-slate-900/90 p-4 rounded-xl border border-cyan-900/80">
+          <div className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+            <Grid className="w-4 h-4 text-cyan-400" /> MATLAB Spatial Stride Subsampling Matrix Derivation
+          </div>
+          <div className="text-[11px] font-mono text-cyan-200 bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div className="text-amber-400">% MATLAB 2D Sampling Stride Code</div>
+            <div>{analytics.formula || 'sampled_img = gray_img(1:s:end, 1:s:end);'}</div>
+            <div className="text-slate-400 pt-1">{analytics.explanation || 'Downsamples 2D image matrix using stride s.'}</div>
+          </div>
+          {analytics.sample_pixel_submatrix && (
+            <div>
+              <span className="text-[10px] font-mono text-slate-400 block mb-1.5">Sample 4x4 Subsampled Pixel Matrix:</span>
+              <div className="grid grid-cols-4 gap-1 max-w-xs font-mono text-center text-xs">
+                {analytics.sample_pixel_submatrix.map((row: number[], rIdx: number) =>
+                  row.map((val: number, cIdx: number) => (
+                    <div key={`${rIdx}-${cIdx}`} className="p-2 bg-slate-950 rounded border border-cyan-800 text-cyan-300 font-bold">
+                      {val}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 7. GRAYSCALE TO RGB CONVERSION VISUALIZER */}
+      {(operation.includes('grayscale_to_rgb') || analytics.type === 'grayscale_to_rgb') && (
+        <div className="space-y-3 bg-slate-900/90 p-4 rounded-xl border border-indigo-900/80">
+          <div className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+            <Cpu className="w-4 h-4 text-indigo-400" /> MATLAB Grayscale → 24-bit RGB Matrix Derivation
+          </div>
+          <div className="text-[11px] font-mono text-indigo-200 bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div className="text-amber-400">% MATLAB RGB Matrix Concatenation / Colormap</div>
+            <div>{analytics.formula || 'RGB = cat(3, gray_img, gray_img, gray_img);'}</div>
+            <div className="text-slate-400 pt-1">{analytics.explanation || 'Expands 1-channel luminance into 3-channel 24-bit RGB space.'}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 8. MATLAB QUANTIZATION VISUALIZER */}
+      {(operation.includes('quantization') || analytics.type === 'matlab_quantization') && (
+        <div className="space-y-4 bg-slate-900/90 p-4 rounded-xl border border-purple-900/80">
+          <div className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+            <Sigma className="w-4 h-4 text-purple-400" /> MATLAB Intensity Quantization Derivation
+          </div>
+
+          {/* MATLAB Code Block */}
+          <div className="text-[11px] font-mono bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div className="text-amber-400">% MATLAB Quantization — Uniform Interval Mapping</div>
+            <div className="text-purple-200 whitespace-pre-wrap">{analytics.formula || 'img_double = double(img);\nquantized_img = uint8(floor(img_double / 256 * L) * (256/L));'}</div>
+            <div className="text-slate-400 pt-1 text-[10px]">{analytics.explanation || 'Maps 256 continuous intensity levels into L uniform quantization intervals.'}</div>
+          </div>
+
+          {/* Quantization Level Bars */}
+          {analytics.quantization_levels && (
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Quantization Step Intervals — L={analytics.quantization_levels} Levels ({analytics.bits_per_pixel} bits/px)
+              </div>
+              <div className="h-14 bg-slate-950 rounded-xl border border-slate-800 flex items-end overflow-hidden px-1.5 pt-1.5 gap-px">
+                {Array.from({ length: Math.min(analytics.quantization_levels, 32) }, (_, i) => {
+                  const L = Math.min(analytics.quantization_levels, 32);
+                  const hue = Math.round((i / L) * 270);
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-t"
+                      style={{ height: `${55 + Math.sin(i * 1.1) * 22}%`, background: `hsl(${hue},70%,45%)` }}
+                      title={`Level ${i}: ${Math.round(i * 256 / analytics.quantization_levels)}–${Math.round((i+1) * 256 / analytics.quantization_levels) - 1}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[9px] font-mono text-slate-500 px-1">
+                <span>0 (Black)</span><span>128 (Mid)</span><span>255 (White)</span>
+              </div>
+            </div>
+          )}
+
+          {/* Before / After 5x5 Pixel Matrices */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 space-y-1.5">
+              <div className="text-[10px] font-bold text-slate-300 flex items-center gap-1">
+                <Grid className="w-3 h-3 text-slate-400" /> Input f(x,y)
+              </div>
+              <div className="grid grid-cols-5 gap-0.5 font-mono text-[9px] text-center">
+                {(analytics.sample_pixels_before || [
+                  [42,45,50,52,48],[44,49,53,58,51],[50,55,60,62,57],[48,52,58,65,60],[45,50,54,61,58]
+                ]).map((row: number[], rIdx: number) =>
+                  row.map((val: number, cIdx: number) => (
+                    <div key={`b-${rIdx}-${cIdx}`}
+                      className="p-1 rounded border border-slate-700 text-slate-300"
+                      style={{ backgroundColor: `rgba(100,100,100,${val/320})` }}>
+                      {val}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="bg-slate-900 p-2.5 rounded-xl border border-purple-900/50 space-y-1.5">
+              <div className="text-[10px] font-bold text-purple-300 flex items-center gap-1">
+                <Sigma className="w-3 h-3 text-purple-400" /> Q(f(x,y))
+              </div>
+              <div className="grid grid-cols-5 gap-0.5 font-mono text-[9px] text-center">
+                {(analytics.sample_pixels_after || [
+                  [32,32,48,48,32],[32,48,48,48,48],[48,48,48,48,48],[32,48,48,64,48],[32,48,48,48,48]
+                ]).map((row: number[], rIdx: number) =>
+                  row.map((val: number, cIdx: number) => (
+                    <div key={`a-${rIdx}-${cIdx}`}
+                      className="p-1 rounded border border-purple-800 text-purple-200 font-bold bg-purple-950/60">
+                      {val}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. MATLAB DIGITIZATION GRID VISUALIZER */}
+      {(operation.includes('digitization') || analytics.type === 'matlab_digitization') && (
+        <div className="space-y-3 bg-slate-900/90 p-4 rounded-xl border border-red-900/80">
+          <div className="text-xs font-bold text-red-300 flex items-center gap-1.5">
+            <Grid className="w-4 h-4 text-red-400" /> MATLAB Spatial Digitization Grid Derivation
+          </div>
+          <div className="text-[11px] font-mono text-red-200 bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+            <div className="text-amber-400">% MATLAB Red Grid Line Visualization Code</div>
+            <div className="whitespace-pre-wrap">{analytics.formula || "line([x x], [1 rows], 'Color', 'r');"}</div>
+            <div className="text-slate-400 pt-1">{analytics.explanation || 'Overlays red spatial sampling grid on continuous image.'}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

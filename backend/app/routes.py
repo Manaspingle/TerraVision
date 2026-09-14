@@ -1,5 +1,6 @@
 import time
 import uuid
+import os
 from typing import Optional, List
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Body
 from pydantic import BaseModel
@@ -365,3 +366,84 @@ def get_notifications(userEmail: Optional[str] = None):
         # filter user-specific notifications and retention notifications
         notifs = [n for n in notifs if n.get("userEmail") in [None, userEmail] or n.get("type") in ["retention", "admin_approval_request"]]
     return {"notifications": notifs}
+
+# --- DATASET & MODEL OPERATIONS ---
+@router.get("/dataset/stats")
+def get_dataset_stats():
+    import joblib
+    model_path = os.path.join(os.path.dirname(__file__), "models", "eurosat_models.joblib")
+    has_model = os.path.exists(model_path)
+    model_metrics = {}
+    samples_trained = 0
+    if has_model:
+        try:
+            data = joblib.load(model_path)
+            model_metrics = data.get("metrics", {})
+            samples_trained = data.get("num_samples_trained", 0)
+        except Exception:
+            pass
+            
+    return {
+        "status": "success",
+        "datasets": [
+            {
+                "name": "EuroSAT Satellite Land Cover Dataset",
+                "type": "Remote Sensing Sentinel-2 Multispectral & RGB",
+                "samples": 27000,
+                "classes": [
+                    "AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial",
+                    "Pasture", "PermanentCrop", "Residential", "River", "SeaLake"
+                ],
+                "status": "Active & Trained" if has_model else "Available"
+            },
+            {
+                "name": "BSDS500 Berkeley Image Segmentation Dataset",
+                "type": "Boundary & Region Ground Truth",
+                "samples": 500,
+                "splits": ["train", "val", "test"],
+                "status": "Active Ground Truth Evaluator"
+            },
+            {
+                "name": "Oxford 102 Flowers Dataset",
+                "type": "Category Classification & Fine-Grained Segmentation",
+                "samples": 8189,
+                "status": "Available"
+            }
+        ],
+        "trained_models": {
+            "status": "Trained" if has_model else "Untrained",
+            "samples_trained": samples_trained,
+            "metrics": model_metrics
+        }
+    }
+
+@router.post("/dataset/train")
+def trigger_dataset_training():
+    from .train_models import train_and_save_models
+    dataset_file = "d:/Terravision/Datasets/archive (1)/eurosat/rgb/2.0.0/eurosat-train.tfrecord-00000-of-00001"
+    output_dir = os.path.join(os.path.dirname(__file__), "models")
+    if not os.path.exists(dataset_file):
+        raise HTTPException(status_code=404, detail="EuroSAT dataset TFRecord not found.")
+    res = train_and_save_models(dataset_file, output_dir)
+    return {
+        "status": "success",
+        "message": "EuroSAT Machine Learning Models successfully trained and saved!",
+        "metrics": res.get("metrics", {}),
+        "num_samples_trained": res.get("num_samples_trained", 0)
+    }
+
+@router.post("/dataset/evaluate-segmentation")
+def evaluate_segmentation(gt_filename: str = Body(..., embed=True)):
+    import numpy as np
+    from .segmentation_evaluator import evaluate_bsds500_segmentation
+    gt_path = os.path.join("d:/Terravision/Datasets/archive/ground_truth/train", gt_filename)
+    if not os.path.exists(gt_path):
+        gt_path = os.path.join("d:/Terravision/Datasets/archive/ground_truth/val", gt_filename)
+    if not os.path.exists(gt_path):
+        gt_path = os.path.join("d:/Terravision/Datasets/archive/ground_truth/test", gt_filename)
+        
+    dummy_pred = np.zeros((321, 481), dtype=np.int32)
+    dummy_pred[100:200, 100:300] = 1
+    dummy_pred[200:300, 200:400] = 2
+    res = evaluate_bsds500_segmentation(dummy_pred, gt_path)
+    return res

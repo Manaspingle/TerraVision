@@ -38,23 +38,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* TerraVision Brand Logo */}
         <div 
-          onClick={() => handleNavClick('landing')}
+          onClick={() => handleNavClick(user ? (isMasterDev ? 'master_admin' : user.role === 'admin' ? 'admin' : 'studio') : 'landing')}
           className="cursor-pointer group"
         >
           <Logo size="md" />
         </div>
 
-        {/* LOGGED-IN DESKTOP NAVIGATION TABS */}
+        {/* LOGGED-IN DESKTOP NAVIGATION TABS (Overview removed after login/signup) */}
         {user ? (
           <nav className="hidden lg:flex items-center gap-1 bg-slate-900/90 border border-slate-800/90 p-1 rounded-2xl">
-            <button
-              onClick={() => handleNavClick('landing')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
-                activeTab === 'landing' ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Overview
-            </button>
             
             <button
               onClick={() => handleNavClick('studio')}
@@ -177,14 +169,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* MOBILE EXPANDABLE MENU DRAWER */}
       {mobileMenuOpen && user && (
         <div className="lg:hidden mt-3 p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2">
-          <button
-            onClick={() => handleNavClick('landing')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold ${
-              activeTab === 'landing' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            Overview
-          </button>
 
           <button
             onClick={() => handleNavClick('studio')}
